@@ -1,22 +1,19 @@
--- [[ ZM HUB - DELTA OPTIMIZED - V26 ]] --
+-- [[ ZM HUB - V115 UI FINAL (BOTONES JUNTO AL ZM) ]] --
 local p = game:GetService("Players").LocalPlayer
 local UI_NAME = "ZM_FINAL_FIX"
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 
--- Limpieza absoluta
 if CoreGui:FindFirstChild(UI_NAME) then CoreGui[UI_NAME]:Destroy() end
 
 local ZM_Settings = { 
-    Hit = false,
-    Spd = false, 
-    Esp = false, 
-    Val = 2,
-    repeatamount = 26,
-    exceptions = {"SayMessageRequest","MeleeUpdateEvent","NinjaBombEvent","BulletUpdateEvent"}
+    Hit = false, Spd = false, Esp = false, Val = 2,
+    repeatamount = 50, 
+    HbActivo = false, HbRango = 15, HbTrans = 0.8, HbObj = "todos",
+    Ignore = {"Block", "Bloque", "Grab", "Agarrar", "Charge", "Carga", "Heavy", "Dash"}
 }
 
--- [[ MULTIPLIER RÁPIDO Y COMPATIBLE ]] --
+-- [[ MOTOR DUAL-BURST (50 GOLPES) ]] --
 local mt = getrawmetatable(game)
 local old = mt.__namecall
 setreadonly(mt, false)
@@ -24,89 +21,103 @@ setreadonly(mt, false)
 mt.__namecall = newcclosure(function(uh, ...)
     local method = getnamecallmethod()
     local args = {...}
+    local name = tostring(uh)
     
     if ZM_Settings.Hit and (method == "FireServer" or method == "InvokeServer") then
-        local name = tostring(uh)
-        local isException = false
-        for _, o in next, ZM_Settings.exceptions do
-            if name == o then isException = true break end
+        local esAccionBase = false
+        for _, word in ipairs(ZM_Settings.Ignore) do
+            if name:find(word) then esAccionBase = true break end
         end
         
-        if not isException then
-            for i = 1, ZM_Settings.repeatamount do
-                old(uh, unpack(args))
-            end
+        if not esAccionBase then
+            for i = 1, 25 do old(uh, unpack(args)) end
+            task.spawn(function()
+                RunService.Heartbeat:Wait()
+                for i = 1, 25 do old(uh, unpack(args)) end
+            end)
         end
     end
-    
     return old(uh, ...)
 end)
 setreadonly(mt, true)
 
 -- [[ INTERFAZ ]] --
-local UI = Instance.new("ScreenGui", CoreGui)
-UI.Name = UI_NAME
-UI.ResetOnSpawn = false
+local UI = Instance.new("ScreenGui", CoreGui); UI.Name = UI_NAME; UI.ResetOnSpawn = false
 
-local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0, 180, 0, 260)
-Main.Position = UDim2.new(0.5, -90, 0.5, -130)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Main.Active = true; Main.Draggable = true
-Instance.new("UICorner", Main)
-
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 30); Title.Text = "ZM HUB"; Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.GothamBold
+-- PANEL PRINCIPAL
+local Main = Instance.new("Frame", UI); Main.Size = UDim2.new(0, 180, 0, 450); Main.Position = UDim2.new(0.5, -90, 0.5, -225); Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15); Main.Active = true; Main.Draggable = true; Instance.new("UICorner", Main)
+local Title = Instance.new("TextLabel", Main); Title.Size = UDim2.new(1, 0, 0, 30); Title.Text = "ZM HUB V115"; Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.GothamBold
 
 local function MainBtn(txt, y)
-    local b = Instance.new("TextButton", Main)
-    b.Size = UDim2.new(0, 160, 0, 35); b.Position = UDim2.new(0, 10, 0, y)
-    b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(160, 0, 0); b.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", b)
-    return b
+    local b = Instance.new("TextButton", Main); b.Size = UDim2.new(0, 160, 0, 28); b.Position = UDim2.new(0, 10, 0, y); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(160, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.TextSize = 12; Instance.new("UICorner", b); return b
 end
 
-local BHit, BSpd, BEsp = MainBtn("HIT", 40), MainBtn("SPD", 80), MainBtn("ESP", 120)
+local BHit = MainBtn("HIT MULTIPLIER", 40)
+local BSpd = MainBtn("TP-WALK", 80)
+local BEsp = MainBtn("ESP NAMES", 120)
+local BHb = MainBtn("HITBOX: OFF", 160)
 
-local SpeedInput = Instance.new("TextBox", Main)
-SpeedInput.Size = UDim2.new(0, 160, 0, 30); SpeedInput.Position = UDim2.new(0, 10, 0, 165)
-SpeedInput.PlaceholderText = "SPD (2)"; SpeedInput.Text = "2"; SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-SpeedInput.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SpeedInput)
+local RangoInp = Instance.new("TextBox", Main); RangoInp.Size = UDim2.new(0, 160, 0, 25); RangoInp.Position = UDim2.new(0, 10, 0, 200); RangoInp.PlaceholderText = "Rango (15)"; RangoInp.BackgroundColor3 = Color3.fromRGB(40, 40, 40); RangoInp.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", RangoInp)
+local TransInp = Instance.new("TextBox", Main); TransInp.Size = UDim2.new(0, 160, 0, 25); TransInp.Position = UDim2.new(0, 10, 0, 235); TransInp.PlaceholderText = "Transp (0.8)"; TransInp.BackgroundColor3 = Color3.fromRGB(40, 40, 40); TransInp.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", TransInp)
+local TargetInp = Instance.new("TextBox", Main); TargetInp.Size = UDim2.new(0, 160, 0, 25); TargetInp.Position = UDim2.new(0, 10, 0, 270); TargetInp.PlaceholderText = "Objetivo (Nombre)"; TargetInp.BackgroundColor3 = Color3.fromRGB(40, 40, 40); TargetInp.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", TargetInp)
+local SpeedInp = Instance.new("TextBox", Main); SpeedInp.Size = UDim2.new(0, 160, 0, 25); SpeedInp.Position = UDim2.new(0, 10, 0, 310); SpeedInp.PlaceholderText = "Speed (2)"; SpeedInp.BackgroundColor3 = Color3.fromRGB(40, 40, 40); SpeedInp.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SpeedInp)
 
--- [[ MINI BOTONES ]] --
-local Mini = Instance.new("Frame", UI); Mini.Size = UDim2.new(0, 160, 0, 30); Mini.Position = UDim2.new(0, 75, 0, 10); Mini.BackgroundTransparency = 1; Mini.Visible = false
+-- BOTÓN ZM Y MINI BOTONES JUNTOS
+local TopBar = Instance.new("Frame", UI); TopBar.Size = UDim2.new(0, 260, 0, 30); TopBar.Position = UDim2.new(0, 10, 0, 10); TopBar.BackgroundTransparency = 1; TopBar.Visible = false
+
+local ZMBtn = Instance.new("TextButton", TopBar); ZMBtn.Size = UDim2.new(0, 50, 0, 25); ZMBtn.Position = UDim2.new(0, 0, 0, 0); ZMBtn.Text = "ZM"; ZMBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); ZMBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", ZMBtn)
+
 local function QuickBtn(txt, x)
-    local b = Instance.new("TextButton", Mini); b.Size = UDim2.new(0, 48, 0, 25); b.Position = UDim2.new(0, x, 0, 0)
-    b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(160, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.TextSize = 10; Instance.new("UICorner", b)
-    return b
+    local b = Instance.new("TextButton", TopBar); b.Size = UDim2.new(0, 45, 0, 25); b.Position = UDim2.new(0, x, 0, 0); b.Text = txt; b.BackgroundColor3 = Color3.fromRGB(160, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.TextSize = 10; Instance.new("UICorner", b); return b
 end
-local QHit, QSpd, QEsp = QuickBtn("HIT", 0), QuickBtn("SPD", 52), QuickBtn("ESP", 104)
 
-local ZMBtn = Instance.new("TextButton", UI); ZMBtn.Size = UDim2.new(0, 55, 0, 25); ZMBtn.Position = UDim2.new(0, 10, 0, 10); ZMBtn.Text = "ZM"; ZMBtn.Visible = false; ZMBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); ZMBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", ZMBtn)
-local Close = Instance.new("TextButton", Main); Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -25, 0, 5); Close.Text = "X"; Close.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+local QHit = QuickBtn("HIT", 55)
+local QSpd = QuickBtn("SPD", 105)
+local QEsp = QuickBtn("ESP", 155)
+local QHb = QuickBtn("HB", 205)
 
--- [[ LÓGICA ]] --
+local Close = Instance.new("TextButton", Main); Close.Size = UDim2.new(0, 20, 0, 20); Close.Position = UDim2.new(1, -25, 0, 5); Close.Text = "X"; Close.BackgroundColor3 = Color3.fromRGB(200, 0, 0); Close.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", Close)
+
+-- [[ FUNCIONES ]] --
 local function Sync()
     local on, off = Color3.fromRGB(0, 160, 0), Color3.fromRGB(160, 0, 0)
     BHit.BackgroundColor3 = ZM_Settings.Hit and on or off; QHit.BackgroundColor3 = ZM_Settings.Hit and on or off
     BSpd.BackgroundColor3 = ZM_Settings.Spd and on or off; QSpd.BackgroundColor3 = ZM_Settings.Spd and on or off
     BEsp.BackgroundColor3 = ZM_Settings.Esp and on or off; QEsp.BackgroundColor3 = ZM_Settings.Esp and on or off
+    BHb.BackgroundColor3 = ZM_Settings.HbActivo and on or off; QHb.BackgroundColor3 = ZM_Settings.HbActivo and on or off; BHb.Text = ZM_Settings.HbActivo and "HITBOX: ON" or "HITBOX: OFF"
 end
 
-Close.MouseButton1Click:Connect(function() Main.Visible = false; Mini.Visible = true; ZMBtn.Visible = true end)
-ZMBtn.MouseButton1Click:Connect(function() Main.Visible = true; Mini.Visible = false; ZMBtn.Visible = false end)
+local function ResetHb()
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            plr.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1); plr.Character.HumanoidRootPart.Transparency = 1
+        end
+    end
+end
 
-local function ToggleHit() ZM_Settings.Hit = not ZM_Settings.Hit Sync() end
-local function ToggleSpd() ZM_Settings.Spd = not ZM_Settings.Spd Sync() end
-local function ToggleEsp() ZM_Settings.Esp = not ZM_Settings.Esp Sync() end
+BHit.MouseButton1Click:Connect(function() ZM_Settings.Hit = not ZM_Settings.Hit Sync() end)
+BSpd.MouseButton1Click:Connect(function() ZM_Settings.Spd = not ZM_Settings.Spd Sync() end)
+BEsp.MouseButton1Click:Connect(function() ZM_Settings.Esp = not ZM_Settings.Esp Sync() end)
+BHb.MouseButton1Click:Connect(function() ZM_Settings.HbActivo = not ZM_Settings.HbActivo if not ZM_Settings.HbActivo then ResetHb() end Sync() end)
 
-BHit.MouseButton1Click:Connect(ToggleHit); QHit.MouseButton1Click:Connect(ToggleHit)
-BSpd.MouseButton1Click:Connect(ToggleSpd); QSpd.MouseButton1Click:Connect(ToggleSpd)
-BEsp.MouseButton1Click:Connect(ToggleEsp); QEsp.MouseButton1Click:Connect(ToggleEsp)
-SpeedInput.FocusLost:Connect(function() ZM_Settings.Val = tonumber(SpeedInput.Text) or 2 end)
+QHit.MouseButton1Click:Connect(function() ZM_Settings.Hit = not ZM_Settings.Hit Sync() end)
+QSpd.MouseButton1Click:Connect(function() ZM_Settings.Spd = not ZM_Settings.Spd Sync() end)
+QEsp.MouseButton1Click:Connect(function() ZM_Settings.Esp = not ZM_Settings.Esp Sync() end)
+QHb.MouseButton1Click:Connect(function() ZM_Settings.HbActivo = not ZM_Settings.HbActivo if not ZM_Settings.HbActivo then ResetHb() end Sync() end)
 
--- Movimiento TP-Walk
+Close.MouseButton1Click:Connect(function() Main.Visible = false; TopBar.Visible = true end)
+ZMBtn.MouseButton1Click:Connect(function() Main.Visible = true; TopBar.Visible = false end)
+
+RangoInp.FocusLost:Connect(function() ZM_Settings.HbRango = tonumber(RangoInp.Text) or 15 end)
+TransInp.FocusLost:Connect(function() ZM_Settings.HbTrans = tonumber(TransInp.Text) or 0.8 end)
+SpeedInp.FocusLost:Connect(function() ZM_Settings.Val = tonumber(SpeedInp.Text) or 2 end)
+TargetInp.FocusLost:Connect(function() 
+    local t = TargetInp.Text:lower()
+    ResetHb()
+    if t == "" or t == "todos" then ZM_Settings.HbObj = "todos" else ZM_Settings.HbObj = t end
+end)
+
+-- [[ LOOPS ]] --
 RunService.RenderStepped:Connect(function()
     if ZM_Settings.Spd and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
         local hum = p.Character:FindFirstChildOfClass("Humanoid")
@@ -116,18 +127,21 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ESP
-local function AddESP(plr)
-    local function Create(char)
-        if not char then return end
-        local head = char:WaitForChild("Head", 15)
-        local h = Instance.new("Highlight", char); h.FillColor = Color3.new(1, 0, 0)
-        local b = Instance.new("BillboardGui", char); b.Size = UDim2.new(0, 200, 0, 50); b.Adornee = head; b.AlwaysOnTop = true; b.ExtentsOffset = Vector3.new(0, 3, 0)
-        local l = Instance.new("TextLabel", b); l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1; l.Text = plr.Name; l.TextColor3 = Color3.new(1, 1, 1); l.Font = Enum.Font.GothamBold; l.TextSize = 14
-        RunService.RenderStepped:Connect(function() if char and char.Parent then h.Enabled = ZM_Settings.Esp l.Visible = ZM_Settings.Esp end end)
+task.spawn(function()
+    while task.wait(0.1) do
+        if ZM_Settings.HbActivo then
+            for _, plr in ipairs(game.Players:GetPlayers()) do
+                if plr ~= p and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = plr.Character.HumanoidRootPart
+                    local n = plr.Name:lower()
+                    if ZM_Settings.HbObj == "todos" or n:find(ZM_Settings.HbObj) then
+                        hrp.Size = Vector3.new(ZM_Settings.HbRango, ZM_Settings.HbRango, ZM_Settings.HbRango)
+                        hrp.Transparency = ZM_Settings.HbTrans; hrp.BrickColor = BrickColor.new("Cyan"); hrp.CanCollide = false
+                    end
+                end
+            end
+        end
     end
-    plr.CharacterAdded:Connect(Create); if plr.Character then Create(plr.Character) end
-end
-for _, v in pairs(game.Players:GetPlayers()) do if v ~= p then AddESP(v) end end
-game.Players.PlayerAdded:Connect(AddESP)
- 
+end)
+
+Sync()
